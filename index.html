@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bergman Minimal Model Simulator — Interactive Glucose-Insulin endocrine dynamics and meal simulation.">
+    <title>Bergman Glucose-Insulin Simulator | Metabolic Endocrine Dynamics</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="brand-badge">🩺 BERGMAN</div>
+                <div class="title-group">
+                    <h1>Glucose-Insulin Dynamics Simulator</h1>
+                    <p class="subtitle">Bergman's Minimal Model of Glucose Kinetics & Pancreatic Response</p>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="meta-tag">3-Compartment ODE</div>
+                <div class="meta-tag meta-tag-accent">Diabetic Phenotyping</div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="main-content">
+            <!-- Sidebar Controls -->
+            <aside class="sidebar-panel">
+                <!-- Patient Phenotypes -->
+                <div class="panel-section">
+                    <h3>👤 Metabolic Phenotypes</h3>
+                    <div class="profile-grid">
+                        <button class="btn-profile active" data-profile="healthy">Healthy Subject</button>
+                        <button class="btn-profile" data-profile="prediabetes">Pre-Diabetic</button>
+                        <button class="btn-profile" data-profile="t2d">Type 2 Diabetes</button>
+                        <button class="btn-profile" data-profile="t1d">Type 1 (No Insulin)</button>
+                        <button class="btn-profile" data-profile="athlete">Endurance Athlete</button>
+                    </div>
+                </div>
+
+                <!-- Meal Challenge (Bolus Input) -->
+                <div class="panel-section">
+                    <h3>🍞 Meal Challenge (Carbs)</h3>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="carbsAmount">Carbohydrate Intake</label>
+                            <span class="ctrl-val" id="carbsAmountVal">75 g (OGTT)</span>
+                        </div>
+                        <input type="range" id="carbsAmount" min="0" max="150" step="5" value="75">
+                    </div>
+
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="absorptionRate">Absorption Speed (Gastric Emptying)</label>
+                            <span class="ctrl-val" id="absorptionRateVal">Medium (0.05 /min)</span>
+                        </div>
+                        <input type="range" id="absorptionRate" min="0.01" max="0.15" step="0.01" value="0.05">
+                    </div>
+                </div>
+
+                <!-- Bergman Biometric Coefficients -->
+                <div class="panel-section">
+                    <h3>🔬 Pancreatic & Tissue Sensitivity</h3>
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="sensP3">Insulin Sensitivity Index (Si)</label>
+                            <span class="ctrl-val" id="sensP3Val">5.0 ×10⁻⁴</span>
+                        </div>
+                        <input type="range" id="sensP3" min="0.5" max="12.0" step="0.5" value="5.0">
+                    </div>
+
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="pancreasGamma">Beta-Cell Pancreatic Responsiveness (γ)</label>
+                            <span class="ctrl-val" id="pancreasGammaVal">0.005</span>
+                        </div>
+                        <input type="range" id="pancreasGamma" min="0.000" max="0.020" step="0.001" value="0.005">
+                    </div>
+
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="glucoseEffectiveness">Glucose Effectiveness (p₁)</label>
+                            <span class="ctrl-val" id="glucoseEffectivenessVal">0.028 /min</span>
+                        </div>
+                        <input type="range" id="glucoseEffectiveness" min="0.005" max="0.060" step="0.002" value="0.028">
+                    </div>
+
+                    <div class="ctrl-group">
+                        <div class="ctrl-label">
+                            <label for="fastingG">Basal Fasting Glucose (Gb)</label>
+                            <span class="ctrl-val" id="fastingGVal">90 mg/dL</span>
+                        </div>
+                        <input type="range" id="fastingG" min="70" max="160" step="2" value="90">
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Dashboard Analytics -->
+            <section class="dashboard-panel">
+                <!-- Status & Glycemic Condition -->
+                <div class="condition-banner normal" id="glycemicBanner">
+                    <div class="banner-icon" id="bannerIcon">🟢</div>
+                    <div class="banner-text">
+                        <h4 id="bannerTitle">Optimal Glycemic Regulation</h4>
+                        <p id="bannerDesc">Blood sugar returns to fasting baseline within 120 minutes post-prandial without dangerous spikes.</p>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Grid -->
+                <div class="metric-row">
+                    <div class="metric-card">
+                        <span class="metric-title">Peak Glycemia (Gmax)</span>
+                        <div class="metric-number" id="peakG">138 <span class="metric-unit">mg/dL</span></div>
+                        <span class="metric-footer" id="peakGTime">Peak at 45 min</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-title">2-Hour Postprandial (G120)</span>
+                        <div class="metric-number" id="g120">102 <span class="metric-unit">mg/dL</span></div>
+                        <span class="metric-footer" id="g120Status">Normal (< 140 mg/dL)</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-title">Peak Insulin Surge (Imax)</span>
+                        <div class="metric-number" id="peakI">48.2 <span class="metric-unit">µU/mL</span></div>
+                        <span class="metric-footer">Prompt phase-1 response</span>
+                    </div>
+
+                    <div class="metric-card">
+                        <span class="metric-title">Disposition Index (DI)</span>
+                        <div class="metric-number" id="dispositionIndex">2.50</div>
+                        <span class="metric-footer" id="diStatus">Good beta-cell compensation</span>
+                    </div>
+                </div>
+
+                <!-- Dual Charts -->
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <div class="chart-title-bar">
+                            <h4>Blood Glucose Concentration Curve G(t)</h4>
+                            <span class="legend-badge">Normal Target: 70 - 140 mg/dL</span>
+                        </div>
+                        <div class="chart-box">
+                            <canvas id="glucoseChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title-bar">
+                            <h4>Plasma Insulin Concentration I(t)</h4>
+                            <span class="legend-badge legend-accent">Pancreatic Secretion (µU/mL)</span>
+                        </div>
+                        <div class="chart-box">
+                            <canvas id="insulinChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
